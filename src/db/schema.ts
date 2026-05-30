@@ -1,11 +1,13 @@
-import { jsonb, pgEnum, pgTable, text, timestamp } from 'drizzle-orm/pg-core'
+import { boolean, integer, jsonb, pgEnum, pgTable, text, timestamp } from 'drizzle-orm/pg-core'
 
 export const contactStatusEnum = pgEnum('contact_status', ['active', 'inactive'])
+
+export const viewStatusEnum = pgEnum('view_status', ['active', 'inactive', 'draft'])
 
 export const contacts = pgTable('contacts', {
   id: text('id').primaryKey(),
   workspaceId: text('workspace_id').notNull(),
-  organizationId: text('organization_id').notNull(),
+  organizationId: text('organization_id'),
   parentId: text('parent_id'),
   name: text('name').notNull(),
   email: text('email'),
@@ -24,3 +26,53 @@ export const contacts = pgTable('contacts', {
 
 export type Contact = typeof contacts.$inferSelect
 export type NewContact = typeof contacts.$inferInsert
+
+export const views = pgTable('views', {
+  id: text('id').primaryKey(),
+  workspaceId: text('workspace_id').notNull(),
+  organizationId: text('organization_id'),
+  name: text('name').notNull(),
+  description: text('description'),
+  source: text('source').notNull(),
+  props: jsonb('props'),
+  meta: jsonb('meta'),
+  status: viewStatusEnum('status').default('draft').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+})
+
+export type View = typeof views.$inferSelect
+export type NewView = typeof views.$inferInsert
+
+export const fieldTypeEnum = pgEnum('field_type', [
+  'text', 'email', 'number', 'tel', 'url', 'password',
+  'textarea', 'select', 'radio', 'checkbox', 'date', 'file', 'hidden',
+])
+
+export const fields = pgTable('fields', {
+  id: text('id').primaryKey(),
+  workspaceId: text('workspace_id').notNull(),
+  name: text('name').notNull(),
+  label: text('label'),
+  type: fieldTypeEnum('type').notNull(),
+  placeholder: text('placeholder'),
+  class: text('class'),
+  defaultValue: text('default_value'),
+  helpText: text('help_text'),
+  required: boolean('required').default(false).notNull(),
+  disabled: boolean('disabled').default(false).notNull(),
+  readonly: boolean('readonly').default(false).notNull(),
+  pattern: text('pattern'),
+  min: text('min'),
+  max: text('max'),
+  minLength: integer('min_length'),
+  maxLength: integer('max_length'),
+  options: jsonb('options'),
+  order: integer('order').default(0).notNull(),
+  meta: jsonb('meta'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+})
+
+export type Field = typeof fields.$inferSelect
+export type NewField = typeof fields.$inferInsert

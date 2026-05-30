@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
 import { or, ilike, eq, and } from 'drizzle-orm';
-import { db } from '../db/index.js';
+import { withWorkspace } from '../db/index.js';
 import { contacts } from '../db/schema.js';
 import { contactId } from '../db/id.js';
 const PROTOCOL_VERSION = '2024-11-05';
@@ -12,6 +12,7 @@ const TOOLS = [
         inputSchema: {
             type: 'object',
             properties: {
+                workspaceId: { type: 'string', description: 'Workspace ID' },
                 query: {
                     type: 'string',
                     description: 'Search string matched against first name, last name, email, and company',
@@ -26,7 +27,7 @@ const TOOLS = [
                     description: 'Maximum number of results to return (default: 10)',
                 },
             },
-            required: ['query'],
+            required: ['workspaceId', 'query'],
         },
     },
     {
@@ -57,17 +58,18 @@ const TOOLS = [
     },
 ];
 async function handleSearchContacts(args) {
+    const workspaceId = args.workspaceId;
     const query = args.query;
     const status = args.status;
     const limit = typeof args.limit === 'number' ? args.limit : 10;
-    if (!query)
-        return { error: { code: -32602, message: 'Missing required argument: query' } };
+    if (!workspaceId || !query)
+        return { error: { code: -32602, message: 'Missing required arguments: workspaceId, query' } };
     const q = `%${query}%`;
-    const results = await db
+    const results = await withWorkspace(workspaceId, (conn) => conn
         .select()
         .from(contacts)
         .where(and(or(ilike(contacts.name, q), ilike(contacts.email, q), ilike(contacts.city, q)), status ? eq(contacts.status, status) : undefined))
-        .limit(limit);
+        .limit(limit));
     return {
         result: {
             content: [
@@ -88,9 +90,7 @@ async function handleAddContact(args) {
     }
     const id = contactId();
     try {
-        const [contact] = await db
-            .insert(contacts)
-            .values({
+        const [contact] = await withWorkspace(workspaceId, (conn) => conn.insert(contacts).values({
             id,
             workspaceId,
             organizationId,
@@ -105,7 +105,7 @@ async function handleAddContact(args) {
             country: args.country,
             status: args.status ?? 'active',
         })
-            .returning();
+            .returning());
         return {
             result: {
                 content: [{ type: 'text', text: JSON.stringify(contact, null, 2) }],

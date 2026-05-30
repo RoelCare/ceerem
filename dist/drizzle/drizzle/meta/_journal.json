@@ -8,6 +8,41 @@
       "when": 1780076936834,
       "tag": "0000_premium_morlun",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1780159803442,
+      "tag": "0001_gifted_fenris",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1780160927589,
+      "tag": "0002_illegal_pyro",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1780161218462,
+      "tag": "0003_graceful_beyonder",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1780162752457,
+      "tag": "0004_dark_mac_gargan",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1780168151564,
+      "tag": "0005_rls_workspace",
+      "breakpoints": true
     }
   ]
 }

@@ -1,0 +1,25 @@
+CREATE TYPE "public"."field_type" AS ENUM('text', 'email', 'number', 'tel', 'url', 'password', 'textarea', 'select', 'radio', 'checkbox', 'date', 'file', 'hidden');--> statement-breakpoint
+CREATE TABLE "fields" (
+	"id" text PRIMARY KEY NOT NULL,
+	"workspace_id" text NOT NULL,
+	"name" text NOT NULL,
+	"label" text,
+	"type" "field_type" NOT NULL,
+	"placeholder" text,
+	"class" text,
+	"default_value" text,
+	"help_text" text,
+	"required" boolean DEFAULT false NOT NULL,
+	"disabled" boolean DEFAULT false NOT NULL,
+	"readonly" boolean DEFAULT false NOT NULL,
+	"pattern" text,
+	"min" text,
+	"max" text,
+	"min_length" integer,
+	"max_length" integer,
+	"options" jsonb,
+	"order" integer DEFAULT 0 NOT NULL,
+	"meta" jsonb,
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"updated_at" timestamp DEFAULT now() NOT NULL
+);

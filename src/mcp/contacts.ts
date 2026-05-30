@@ -1,6 +1,6 @@
 import { Hono } from 'hono'
 import { or, ilike, eq, and } from 'drizzle-orm'
-import { db } from '../db/index.js'
+import { withWorkspace } from '../db/index.js'
 import { contacts } from '../db/schema.js'
 import { contactId } from '../db/id.js'
 
@@ -14,6 +14,7 @@ const TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
+        workspaceId: { type: 'string', description: 'Workspace ID' },
         query: {
           type: 'string',
           description: 'Search string matched against first name, last name, email, and company',
@@ -28,7 +29,7 @@ const TOOLS = [
           description: 'Maximum number of results to return (default: 10)',
         },
       },
-      required: ['query'],
+      required: ['workspaceId', 'query'],
     },
   },
   {
@@ -62,27 +63,30 @@ const TOOLS = [
 type Status = 'active' | 'inactive'
 
 async function handleSearchContacts(args: Record<string, unknown>) {
+  const workspaceId = args.workspaceId as string
   const query = args.query as string
   const status = args.status as Status | undefined
   const limit = typeof args.limit === 'number' ? args.limit : 10
 
-  if (!query) return { error: { code: -32602, message: 'Missing required argument: query' } }
+  if (!workspaceId || !query) return { error: { code: -32602, message: 'Missing required arguments: workspaceId, query' } }
 
   const q = `%${query}%`
-  const results = await db
-    .select()
-    .from(contacts)
-    .where(
-      and(
-        or(
-          ilike(contacts.name, q),
-          ilike(contacts.email, q),
-          ilike(contacts.city, q),
+  const results = await withWorkspace(workspaceId, (conn) =>
+    conn
+      .select()
+      .from(contacts)
+      .where(
+        and(
+          or(
+            ilike(contacts.name, q),
+            ilike(contacts.email, q),
+            ilike(contacts.city, q),
+          ),
+          status ? eq(contacts.status, status) : undefined,
         ),
-        status ? eq(contacts.status, status) : undefined,
-      ),
-    )
-    .limit(limit)
+      )
+      .limit(limit),
+  )
 
   return {
     result: {
@@ -108,9 +112,8 @@ async function handleAddContact(args: Record<string, unknown>) {
   const id = contactId()
 
   try {
-    const [contact] = await db
-      .insert(contacts)
-      .values({
+    const [contact] = await withWorkspace(workspaceId, (conn) =>
+      conn.insert(contacts).values({
         id,
         workspaceId,
         organizationId,
@@ -125,7 +128,8 @@ async function handleAddContact(args: Record<string, unknown>) {
         country: args.country as string | undefined,
         status: (args.status as Status | undefined) ?? 'active',
       })
-      .returning()
+      .returning(),
+    )
 
     return {
       result: {

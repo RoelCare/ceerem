@@ -1,0 +1,10 @@
+> drizzle-kit migrate
+
+No config path provided, using default 'drizzle.config.ts'
+Reading config file '/Users/roel/Dev/ceerem/drizzle.config.ts'
+ Error  Please provide required params for Postgres driver:
+    [✓] host: 'localhost'
+        port?: 
+    [✓] user: 'roel'
+        password?: 
+    [✓] database: 'ceerem'
